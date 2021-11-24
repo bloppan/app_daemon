@@ -13,13 +13,13 @@
 #include "inc/SharedLibraries.h"
 #include "inc/TemperatureControl.h"
 #include "inc/PowerControl.h"
-#include "inc/json.hpp"
+//#include "inc/json.hpp"
 
 //#include <nlohmann/json.hpp>
 
 using namespace std;
 
-using namespace nlohmann;
+//using namespace nlohmann;
 
 PAC1932_struct PAC1932data = {0};
 
@@ -28,7 +28,7 @@ int main(void)
 
 	TemperatureControl T;
 	PowerControl P;
-
+/*
 	json j;
 
 	// add a number that is stored as double (note the implicit conversion of j to an object)
@@ -55,7 +55,7 @@ int main(void)
 	//j << cout;
 
 	cout << j << endl;
-
+*/
 	std::thread TempThread(&TemperatureControl::StateMachine, TemperatureControl());
 	std::thread PwrThread(&PowerControl::StateMachine, PowerControl());
 
