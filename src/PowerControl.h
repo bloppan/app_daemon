@@ -1,36 +1,31 @@
 /*
  * PowerControl.h
  *
- *  Created on: 18 nov. 2021
- *      Author: bernardo
+ *  Created on: Nov 29, 2021
+ *      Author: bernar
  */
 
 #ifndef POWERCONTROL_H_
 #define POWERCONTROL_H_
 
 #include <iostream>
-#include <thread>
-#include <string.h>
-#include <stdio.h>
-#include "../inc/SharedLibraries.h"
+
+#include "SharedLibraries.h"
+
+#include "../../app_includes/app_typedef.h"
 
 class PowerControl: public SharedLibraries {
 public:
 	PowerControl();
 	virtual ~PowerControl();
 
-	void  StateMachine(void);
+	void  PwrStateMachine();
 
 	PAC1932_struct* PowerData;
 
-	enum States {
+	bool PowerThread_ON;
 
-		IDDLE,
-		SENSOR_READY,
-		WARNING,
-		ERROR
-
-	}State;
+	uint32_t PowerState;
 
 };
 

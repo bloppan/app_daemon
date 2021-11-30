@@ -1,14 +1,16 @@
 /*
  * SharedLibraries.cpp
  *
- *  Created on: 18 nov. 2021
- *      Author: bernardo
+ *  Created on: Nov 29, 2021
+ *      Author: bernar
  */
 
 #include "SharedLibraries.h"
 
 SharedLibraries::SharedLibraries() {
 	// TODO Auto-generated constructor stub
+
+	std::cout << "SharedLibraries Constructor" << std::endl;
 
 	this->HTS221_Initialize		= NULL;
 	this->HTS221_getHumidity 	= NULL;
@@ -31,6 +33,7 @@ SharedLibraries::~SharedLibraries() {
 	// TODO Auto-generated destructor stub
 }
 
+
 error_type SharedLibraries::LoadLibrary(uint32_t Library)
 {
 	error_type codeError = NO_ERROR;
@@ -44,7 +47,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 	case HTS221:
 
 		// Load HTS221 library
-		libHandlerHTS221 = SharedLibraries::SearchLibrary("libHTS221.so.1", "/usr/lib/");
+		libHandlerHTS221 = this->SearchLibrary("libHTS221.so.1", "/usr/lib/");
 
 		this->HTS221_Initialize		= (error_type ( *)(void)) dlsym(libHandlerHTS221, "HTS221_Initialize");
 		this->HTS221_getHumidity 	= (error_type ( *)(float *)) dlsym(libHandlerHTS221, "HTS221_getHumidity");
@@ -54,7 +57,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 	case GPIO:
 
 		// Load GPIO shared library
-		libHandlerGPIO = SharedLibraries::SearchLibrary("libGPIO.so.1", "/usr/lib/");
+		libHandlerGPIO = this->SearchLibrary("libGPIO.so.1", "/usr/lib/");
 
 		this->configGPIO 		= (error_type ( *)(uint8_t, char*)) dlsym(libHandlerGPIO, "configGPIO");
 		this->freeGPIO 			= (error_type ( *)(uint8_t)) dlsym(libHandlerGPIO, "freeGPIO");
@@ -66,7 +69,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 	case PAC1932:
 
 		// Load PAC1932 shared library
-		libHandlerPAC1932 = SharedLibraries::SearchLibrary("libPAC1932.so.1", "/usr/lib/");
+		libHandlerPAC1932 = this->SearchLibrary("libPAC1932.so.1", "/usr/lib/");
 
 		this->PAC1932_Initialize	= (error_type ( *)(void)) dlsym(libHandlerPAC1932, "PAC1932_Initialize");
 		this->PAC1932_GetAllValues	= (error_type ( *)(PAC1932_struct*)) dlsym(libHandlerPAC1932, "PAC1932_GetAllValues");
@@ -75,7 +78,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 	case PCA9532:
 
 		// Load PCA9532 shared library
-		libHandlerPCA9532 = SharedLibraries::SearchLibrary("libPCA9532.so.1", "/usr/lib/");
+		libHandlerPCA9532 = this->SearchLibrary("libPCA9532.so.1", "/usr/lib/");
 
 		this->setLED_Value			= (error_type ( *)(uint8_t, uint8_t)) dlsym(libHandlerPCA9532, "setLED_Value");
 		this->PCA9532_Initialize 	= (error_type ( *)(void)) dlsym(libHandlerPCA9532, "PCA9532_Initialize");
@@ -102,9 +105,7 @@ void* SharedLibraries::SearchLibrary(const char* name, const char* directory)
 
 	if(libHandler == NULL) printf("[ERROR]\tLoading %s \n", route);
 
-	else printf("[OK]\tLibrary %s loaded \n", name);
-
-	printf("Hola \n");
+	//else printf("[OK]\tLibrary %s loaded \n", name);
 
 	return libHandler;
 }

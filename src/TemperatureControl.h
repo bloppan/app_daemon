@@ -1,38 +1,32 @@
 /*
  * TemperatureControl.h
  *
- *  Created on: 16 nov. 2021
- *      Author: bernardo
+ *  Created on: Nov 29, 2021
+ *      Author: bernar
  */
 
 #ifndef TEMPERATURECONTROL_H_
 #define TEMPERATURECONTROL_H_
 
 #include <iostream>
-#include <thread>
-#include <string.h>
-#include <stdio.h>
-#include "../inc/SharedLibraries.h"
+
+#include <stdint.h>
+
+#include "SharedLibraries.h"
 
 class TemperatureControl: public SharedLibraries {
 public:
 	TemperatureControl();
 	virtual ~TemperatureControl();
 
-	void  StateMachine(void);
+	void  TempStateMachine();
 
 	float* TempData;
 	float* HumData;
 
-	enum States {
+	bool TempThread_ON;
 
-		IDDLE,
-		SENSOR_READY,
-		WARNING,
-		ERROR
-
-	}State;
-
+	uint32_t StateTemp;
 };
 
 #endif /* TEMPERATURECONTROL_H_ */

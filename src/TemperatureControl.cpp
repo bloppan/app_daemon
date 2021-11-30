@@ -1,56 +1,80 @@
 /*
  * TemperatureControl.cpp
  *
- *  Created on: 16 nov. 2021
- *      Author: bernardo
+ *  Created on: Nov 29, 2021
+ *      Author: bernar
  */
 
 #include "TemperatureControl.h"
+#include <thread>
+#include <mutex>
 
-using namespace std;
+extern std::mutex mutex_hardware;
 
 TemperatureControl::TemperatureControl() {
+	// TODO Auto-generated constructor stub
 
-	this->State = IDDLE;
+	this->StateTemp = SENSOR_IDDLE;
 
 	this->HumData	= NULL;
 	this->TempData	= NULL;
 
+	this->TempThread_ON = true;
+
+	std::cout << "TemperatureControl Constructor" << std::endl;
+
+
 }
 
-void TemperatureControl::StateMachine(void)
+
+void TemperatureControl::TempStateMachine()
 {
 
-	while(1){
+	while(this->TempThread_ON){
 
-		switch(TemperatureControl::State) {
+		switch(this->StateTemp) {
 
-			case IDDLE:
+			case SENSOR_IDDLE:
 
-				SharedLibraries::LoadLibrary(HTS221);
-				SharedLibraries::HTS221_Initialize();
+				this->LoadLibrary(HTS221);
+				this->LoadLibrary(PCA9532);
 
-				this->State = SENSOR_READY;
+				mutex_hardware.lock();
+				this->HTS221_Initialize();
+				this->PCA9532_Initialize();
+				mutex_hardware.unlock();
 
-			break;
+				mutex_hardware.lock();
+				this->setLED_Value(LED_TEMP, BLUE);
+				mutex_hardware.unlock();
+
+				this->StateTemp = SENSOR_READY;
+
+				break;
 
 			case SENSOR_READY:
 
-				SharedLibraries::HTS221_getTemperature(TemperatureControl::TempData);
-				SharedLibraries::HTS221_getHumidity(TemperatureControl::HumData);
+				mutex_hardware.lock();
+				this->HTS221_getTemperature(this->TempData);
+				this->HTS221_getHumidity(this->HumData);
+				mutex_hardware.unlock();
+
+				mutex_hardware.lock();
+				this->setLED_Value(LED_TEMP, GREEN);
+				mutex_hardware.unlock();
 
 				std::cout << "Temperatura = ";
-				std::cout << TemperatureControl::TempData << endl;
-				//std::cout << "Humedad = ";
-				//std::cout << TemperatureControl::HumData << std::endl;
+				std::cout << this->TempData << std::endl;
+				std::cout << "Humedad = ";
+				std::cout << this->HumData << std::endl;
 
 				break;
 
-			case WARNING:
+			case SENSOR_WARNING:
 
 				break;
 
-			case ERROR:
+			case SENSOR_ERROR:
 
 			break;
 
@@ -64,8 +88,6 @@ void TemperatureControl::StateMachine(void)
 }
 
 TemperatureControl::~TemperatureControl() {
-
-
-
+	// TODO Auto-generated destructor stub
 }
 
