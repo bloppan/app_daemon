@@ -18,6 +18,7 @@ public:
 	StartDaemon();
 	virtual ~StartDaemon();
 
+	void get_ThreadsState();
 	void stopThreads();
 	void LaunchThreads();
 };

@@ -21,7 +21,7 @@ public:
 
 	void  PwrStateMachine();
 
-	PAC1932_struct* PowerData;
+
 
 	bool PowerThread_ON;
 

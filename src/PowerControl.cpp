@@ -14,7 +14,7 @@ PowerControl::PowerControl() {
 
 	std::cout << "PowerControl Constructor" << std::endl;
 
-	this->PowerData		= NULL;
+	//this->PowerData		= NULL;
 	this->PowerState	= SENSOR_IDDLE;
 
 	this->PowerThread_ON = true;
@@ -22,6 +22,8 @@ PowerControl::PowerControl() {
 
 void PowerControl::PwrStateMachine()
 {
+
+	PAC1932_struct PowerData = {0};
 
 	while(this->PowerThread_ON){
 
@@ -42,18 +44,26 @@ void PowerControl::PwrStateMachine()
 				mutex_hardware.unlock();
 
 				this->PowerState = SENSOR_READY;
+
+				std::cout << "\n-DAEMON PowerControl state READY \n" << std::endl;
+
 				break;
 
 			case SENSOR_READY:
 
+				std::cout << "\n-DAEMON PowerControl Thread: \n" << std::endl;
+
 				mutex_hardware.lock();
-				this->PAC1932_GetAllValues(this->PowerData);
+				this->PAC1932_GetAllValues(&PowerData);
 				mutex_hardware.unlock();
 
 				mutex_hardware.lock();
 				this->setLED_Value(LED_PWR, GREEN);
 				mutex_hardware.unlock();
 
+				//std::cout << "Temp state = " << this->StateTemp << std::endl;
+
+				std::cout << "\n" << std::endl;
 				break;
 
 			case SENSOR_WARNING:

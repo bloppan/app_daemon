@@ -9,9 +9,8 @@
 #define HARDWARE_H_
 
 #include "TemperatureControl.h"
-#include "PowerControl.h"
 
-class Hardware: public TemperatureControl, public PowerControl {
+class Hardware: public TemperatureControl {
 public:
 	Hardware();
 	virtual ~Hardware();

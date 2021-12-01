@@ -12,17 +12,18 @@
 
 #include <stdint.h>
 
-#include "SharedLibraries.h"
+#include "PowerControl.h"
 
-class TemperatureControl: public SharedLibraries {
+
+class TemperatureControl: public PowerControl {
 public:
 	TemperatureControl();
 	virtual ~TemperatureControl();
 
 	void  TempStateMachine();
 
-	float* TempData;
-	float* HumData;
+//	float TempData;
+//	float HumData;
 
 	bool TempThread_ON;
 

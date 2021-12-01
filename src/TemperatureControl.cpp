@@ -16,8 +16,8 @@ TemperatureControl::TemperatureControl() {
 
 	this->StateTemp = SENSOR_IDDLE;
 
-	this->HumData	= NULL;
-	this->TempData	= NULL;
+//	this->HumData	= NULL;
+//	this->TempData	= NULL;
 
 	this->TempThread_ON = true;
 
@@ -29,6 +29,9 @@ TemperatureControl::TemperatureControl() {
 
 void TemperatureControl::TempStateMachine()
 {
+
+	float TempData = 0;
+	float HumData = 0;
 
 	while(this->TempThread_ON){
 
@@ -50,13 +53,16 @@ void TemperatureControl::TempStateMachine()
 
 				this->StateTemp = SENSOR_READY;
 
+				std::cout << "\n-DAEMON Temperature state READY \n" << std::endl;
 				break;
 
 			case SENSOR_READY:
 
+				std::cout << "\n-DAEMON Temperature Thread: \n" << std::endl;
 				mutex_hardware.lock();
-				this->HTS221_getTemperature(this->TempData);
-				this->HTS221_getHumidity(this->HumData);
+
+				this->HTS221_getTemperature(&TempData);
+				this->HTS221_getHumidity(&HumData);
 				mutex_hardware.unlock();
 
 				mutex_hardware.lock();
@@ -64,9 +70,13 @@ void TemperatureControl::TempStateMachine()
 				mutex_hardware.unlock();
 
 				std::cout << "Temperatura = ";
-				std::cout << this->TempData << std::endl;
+				std::cout << TempData << std::endl;
 				std::cout << "Humedad = ";
-				std::cout << this->HumData << std::endl;
+				std::cout << HumData << std::endl;
+
+				std::cout << "Power state = " << this->PowerState << std::endl;
+
+				std::cout << "\n" << std::endl;
 
 				break;
 
@@ -84,6 +94,7 @@ void TemperatureControl::TempStateMachine()
 		}
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
+//	}
 	}
 }
 
