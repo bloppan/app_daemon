@@ -19,14 +19,8 @@ public:
 	PowerControl();
 	virtual ~PowerControl();
 
-	void  PwrStateMachine();
-
-
-
-	bool PowerThread_ON;
-
-	uint32_t PowerState;
-
+	void  PowerStateMachine();
+	void PowerChangeState(uint32_t);
 };
 
 #endif /* POWERCONTROL_H_ */

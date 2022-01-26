@@ -20,14 +20,9 @@ public:
 	TemperatureControl();
 	virtual ~TemperatureControl();
 
-	void  TempStateMachine();
+	void 	TempChangeState(uint32_t State);
+	void	TempStateMachine();
 
-//	float TempData;
-//	float HumData;
-
-	bool TempThread_ON;
-
-	uint32_t StateTemp;
 };
 
 #endif /* TEMPERATURECONTROL_H_ */

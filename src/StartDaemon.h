@@ -21,6 +21,8 @@ public:
 	void get_ThreadsState();
 	void stopThreads();
 	void LaunchThreads();
+
+
 };
 
 #endif /* STARTDAEMON_H_ */
