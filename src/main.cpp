@@ -12,18 +12,18 @@
 
 #include <stdio.h>
 #include <unistd.h>
-
 #include "StartDaemon.h"
-#include "TemperatureControl.h"
 
 using namespace std;
+using namespace nlohmann;
 
-std::mutex mutex_hardware;
 
-uint32_t TempThread_ON, PowerThread_ON;
-uint32_t TempState, PowerState;
+uint32_t TempThread_isActive, PowerThread_isActive, AndroidThread_isActive, CanThread_isActive;
+uint32_t TempState, PowerState, AndroidState, CanState;
 
-float temperatura;
+//float temperatura;
+
+std::mutex log_mutex;
 
 int main() {
 
@@ -31,25 +31,16 @@ int main() {
 
 	TempState 		= 0;
 	PowerState 		= 0;
+	AndroidState	= 0;
+	CanState		= 0;
 
-	TempThread_ON 	= 1;
-	PowerThread_ON	= 1;
+	TempThread_isActive		= 1;
+	PowerThread_isActive	= 1;
+	AndroidThread_isActive	= 1;
+	CanThread_isActive		= 1;
 
-	temperatura = 0;
 
 	daemon.LaunchThreads();
-
-	cout << "Esperando enter ... " << std::endl;
-
-	getchar();
-
-	cout << "Entra al while(1) " << std::endl;
-
-	while(1){}
-
-
-
-	sleep(10);
 
 	return 0;
 }

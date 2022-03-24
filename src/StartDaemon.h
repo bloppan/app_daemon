@@ -10,10 +10,10 @@
 
 #include <iostream>
 
-#include "Hardware.h"
+#include "AndroidControl.h"
 
 
-class StartDaemon: public Hardware {
+class StartDaemon: public AndroidControl {
 public:
 	StartDaemon();
 	virtual ~StartDaemon();
@@ -21,8 +21,6 @@ public:
 	void get_ThreadsState();
 	void stopThreads();
 	void LaunchThreads();
-
-
 };
 
 #endif /* STARTDAEMON_H_ */

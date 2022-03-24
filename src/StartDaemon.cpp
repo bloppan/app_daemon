@@ -15,14 +15,19 @@
 
 using namespace std;
 
-extern uint32_t TempThread_ON;
+extern uint32_t TempThread_isActive;
 extern uint32_t TempState;
 
-extern uint32_t PowerThread_ON;
+extern uint32_t PowerThread_isActive;
 extern uint32_t PowerState;
+
+extern uint32_t AndroidThread_isActive;
 
 extern float temperatura;
 
+/**
+ * Constructor de la clase StartDaemon
+ */
 StartDaemon::StartDaemon() {
 	// TODO Auto-generated constructor stub
 
@@ -31,7 +36,7 @@ StartDaemon::StartDaemon() {
 
 void StartDaemon::get_ThreadsState()
 {
-
+/*
 	uint32_t contador = 0;
 	uint32_t DaemonThread = 1;
 
@@ -65,51 +70,35 @@ void StartDaemon::get_ThreadsState()
 
 		sleep(1);
 	}
-
+*/
 }
-
+/**
+ * Lanza los hilos del sistema de soporte
+ */
 void StartDaemon::LaunchThreads()
 {
 
 	std::cout << "\nDAEMON - Launching Threads... \n" << std::endl;
 
-	/*
-		while(1){
-
-			this->TempStateMachine();
-			this->PwrStateMachine();
-			sleep(1);
-		}
-	*/
-
-
 	std::thread TempThread(&TemperatureControl::TempStateMachine, *this);
 	std::thread PowerThread(&PowerControl::PowerStateMachine, *this);
-	std::thread DaemonThread(&StartDaemon::get_ThreadsState, *this);
+	std::thread AndroidThread(&AndroidControl::communication_state_machine, *this);
+	std::thread CanThread(&CanControl::CanStateMachine, *this);
 
+	// Finalizacion de los hilos
 	TempThread.join();
 	PowerThread.join();
-	DaemonThread.join();
+	AndroidThread.join();
+	CanThread.join();
 
+	//std::thread DaemonThread(&StartDaemon::get_ThreadsState, *this);
+	//DaemonThread.join();
 
-/*
-	while(1){
-
-	std::thread TempThread(&TemperatureControl::TempStateMachine, *this);
-	std::thread PowerThread(&PowerControl::PwrStateMachine, *this);
-
-	TempThread.join();
-	PowerThread.join();
-
-	cout << "Temp state = " << TemperatureControl::StateTemp << std::endl;
-	cout << "Power state = " << PowerControl::PowerState << std::endl;
 
 }
-
-*/
-
-}
-
+/**
+ * Destructor de la clase StartDaemon
+ */
 StartDaemon::~StartDaemon() {
 	// TODO Auto-generated destructor stub
 }

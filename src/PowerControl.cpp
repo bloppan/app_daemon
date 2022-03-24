@@ -7,12 +7,11 @@
 
 #include "PowerControl.h"
 
-extern std::mutex mutex_hardware;
-extern uint32_t PowerThread_ON;
+extern uint32_t PowerThread_isActive;
 extern uint32_t PowerState;
 
+extern std::mutex log_mutex;
 /*
-//(parpadeo -> alimentacion baja, led fijo alta)
 
 USB, BATERY, PERIPHERALS, SOM
 
@@ -56,14 +55,18 @@ Bad Read -> WHITE		POWER_ERROR_READ
 #define	POWER_FAULT_TERMINAL_AND_PERIPHERALS		6		// Fallo en la alimentacion de terminal y perifericos
 #define	POWER_ERROR_READ							7		// Fallo lectura del sensor
 
-
+/**
+ * Constructor de la clase PowerControl
+ */
 PowerControl::PowerControl() {
 	// TODO Auto-generated constructor stub
 
 	std::cout << "PowerControl Constructor" << std::endl;
 
 }
-
+/**
+ * Cambio de estado en la alimentacion del sistema de soporte
+ */
 void PowerControl::PowerChangeState(uint32_t State)
 {
 
@@ -91,118 +94,112 @@ void PowerControl::PowerChangeState(uint32_t State)
 			break;
 	}
 }
-
+/**
+ * Maquina de estados de control de la alimentacion del sistema de soporte
+ */
 void PowerControl::PowerStateMachine()
 {
 
 	PAC1932_struct PowerData = {0};
 
-	uint32_t power_state_code = 0;
-
+	uint32_t power_error_code = 0;
 	uint32_t old_state;
 
 	old_state = PowerState;
 
-	while(PowerThread_ON){
+	while(PowerThread_isActive){
 
 		switch(PowerState){
 
 			case POWER_IDDLE:
 
-				mutex_hardware.lock();
+				log_mutex.lock();
+				if(!this->LoadLibrary(PAC1932) && !this->LoadLibrary(PCA9532) && !
+						this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Value(LED_PWR, BLUE)){
 
-				this->LoadLibrary(PAC1932);
-				this->LoadLibrary(PCA9532);
-				this->LoadLibrary(GPIO);
-
-				PowerState = POWER_INITIALIZE;
-
-				std::cout << "\n-DAEMON PowerControl state READY \n" << std::endl;
-
-				mutex_hardware.unlock();
-
+					PowerState = POWER_INITIALIZE;
+					std::cout << "\n\nPOWER THREAD:\t" << std::endl;
+				}
+				log_mutex.unlock();
 				break;
 
 			case POWER_INITIALIZE:
 
-				mutex_hardware.lock();
+				log_mutex.lock();
+				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
+				if(!this->PAC1932_Initialize()){
 
-				this->PAC1932_Initialize();
-				this->PCA9532_Initialize();
-
-				this->setLED_Value(LED_PWR, BLUE);
-
-				PowerState = POWER_READY;
-
-				mutex_hardware.unlock();
-
+					PowerState = POWER_READY;
+				}
+				log_mutex.unlock();
 				break;
 
 			default:
 
-				mutex_hardware.lock();
-				std::cout << "\n-DAEMON PowerControl Thread: \n" << std::endl;
+				log_mutex.lock();
+				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
+				if(!this->PAC1932_GetAllValues(&PowerData)){
 
-				this->PAC1932_GetAllValues(&PowerData);
+					power_error_code = 0x0000;
 
-				power_state_code = 0x0000;
+					// Se comprueban si los voltajes de los perifericos y del terminal estan dentro del rango de lecturas correctas. En caso de que
+					// alguno de ellos no este dentro del rango se marca 1 bandera de error
+					if(PowerData.USB_Connector.Voltage < 4.8 || PowerData.USB_Connector.Voltage > 5.0){
 
-				// Se comprueban si los voltajes de los perifericos y del terminal estan dentro del rango de lecturas correctas. En caso de que
-				// alguno de ellos no este dentro del rango se marca 1 bandera de error
-				if(PowerData.USB_Connector.Voltage < 4.8 || PowerData.USB_Connector.Voltage > 5.0){
+						power_error_code |= 0x0001;
+					}
+					if(PowerData.Terminal_Battery.Voltage < 4.1 || PowerData.Terminal_Battery.Voltage > 4.3){
 
-					power_state_code |= 0x0001;
-				}
-				if(PowerData.Terminal_Battery.Voltage < 4.1 || PowerData.Terminal_Battery.Voltage > 4.3){
+						power_error_code |= 0x0010;
+					}
+					if(PowerData.Peripherals.Voltage < 3.1 || PowerData.Peripherals.Voltage > 3.3){
 
-					power_state_code |= 0x0010;
-				}
-				if(PowerData.Peripherals.Voltage < 3.1 || PowerData.Peripherals.Voltage > 3.3){
+						power_error_code |= 0x0100;
+					}
+					if(PowerData.SOM.Voltage < 3.1 || PowerData.SOM.Voltage > 3.3){
 
-					power_state_code |= 0x0100;
-				}
-				if(PowerData.SOM.Voltage < 3.1 || PowerData.SOM.Voltage > 3.3){
+						power_error_code |= 0x1000;
+					}
 
-					power_state_code |= 0x1000;
-				}
+					// Si todo esta bien (0x0000) se ignora esta comprobacion
+					// Si todo esta mal (0x1111) se ignora esta comprobacion
+					// Si hay algo mal, se obtiene el codigo de error (0x01, 0x10 o 0x11)
+					if(power_error_code != 0x0000 && power_error_code != 0x1111){
 
-				// Si todo esta bien (0x0000) se ignora esta comprobacion
-				// Si todo esta mal (0x1111) se ignora esta comprobacion
-				// Si hay algo mal, se obtiene el codigo de error (0x01, 0x10 o 0x11)
-				if(power_state_code != 0x0000 && power_state_code != 0x1111){
+						power_error_code = (power_error_code & 0x0001) | ((power_error_code & 0x0010) >> 8) | ((power_error_code & 0x0100) >> 8) | ((power_error_code & 0x1000) >> 16);
+					}
 
-					power_state_code = (power_state_code & 0x0001) | ((power_state_code & 0x0010) >> 8) | ((power_state_code & 0x0100) >> 8) | ((power_state_code & 0x1000) >> 16);
-				}
+					// Se actualiza el estado del control de potencia en funcion del codigo de error obtenido
+					if(power_error_code == 0x0000){
 
-				// Se actualiza el estado del control de potencia en funcion del codigo de error obtenido
-				if(power_state_code == 0x0000){
+						PowerState = POWER_READY;
 
-					PowerState = POWER_READY;
+					}else if(power_error_code == 0x1111){
 
-				}else if(power_state_code == 0x1111){
+						PowerState = POWER_FAULT_ALL_SOURCES;
 
-					PowerState = POWER_FAULT_ALL_SOURCES;
+					}else if(power_error_code == 0x01){
 
-				}else if(power_state_code == 0x01){
+						PowerState = POWER_FAULT_PERIPHERALS;
 
-					PowerState = POWER_FAULT_PERIPHERALS;
+					}else if(power_error_code == 0x10){
 
-				}else if(power_state_code == 0x10){
+						PowerState = POWER_FAULT_TERMINAL;
 
-					PowerState = POWER_FAULT_TERMINAL;
+					}else if(power_error_code == 0x11){
 
-				}else if(power_state_code == 0x11){
+						PowerState = POWER_FAULT_TERMINAL_AND_PERIPHERALS;
 
-					PowerState = POWER_FAULT_TERMINAL_AND_PERIPHERALS;
+					}else{
 
+						PowerState = POWER_ERROR_READ;
+					}
 				}else{
-
-					PowerState = POWER_ERROR_READ;
+					std::cout << "\nERROR reading Power sensor \n" << std::endl;
+					// Encender LED blanco
+					this->setLED_Value(LED_PWR, WHITE);
 				}
 
-				mutex_hardware.unlock();
-
-				std::cout << "\n" << std::endl;
 				break;
 		}
 
@@ -212,11 +209,14 @@ void PowerControl::PowerStateMachine()
 			this->PowerChangeState(PowerState);
 			old_state = PowerState;
 		}
+		log_mutex.unlock();
 
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}
 }
-
+/**
+ * Destructor de la clase PowerControl
+ */
 PowerControl::~PowerControl() {
 	// TODO Auto-generated destructor stub
 }

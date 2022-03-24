@@ -7,14 +7,16 @@
 
 #include "SharedLibraries.h"
 
+/**
+ * Constructor de la clase SharedLibraries
+ */
 SharedLibraries::SharedLibraries() {
 	// TODO Auto-generated constructor stub
 
 	std::cout << "SharedLibraries Constructor" << std::endl;
 
-	this->HTS221_Initialize		= NULL;
-	this->HTS221_getHumidity 	= NULL;
-	this->HTS221_getTemperature	= NULL;
+	this->WSEN_TIDS_Initialize		= NULL;
+	this->WSEN_TIDS_getTemperature 	= NULL;
 
 	this->configGPIO 		= NULL;
 	this->freeGPIO 			= NULL;
@@ -27,31 +29,38 @@ SharedLibraries::SharedLibraries() {
 
 	this->setLED_Value			= NULL;
 	this->PCA9532_Initialize 	= NULL;
+
+	this->CAN_Initialize		= NULL;
+	this->CAN_Send				= NULL;
+	this->CAN_SendFile			= NULL;
+	this->CAN_Receive			= NULL;
 }
 
 SharedLibraries::~SharedLibraries() {
 	// TODO Auto-generated destructor stub
 }
 
-
+/**
+ * Carga las librerias compartidas
+ */
 error_type SharedLibraries::LoadLibrary(uint32_t Library)
 {
 	error_type codeError = NO_ERROR;
-	void* libHandlerHTS221 = NULL;
+	void* libHandlerWSEN_TIDS = NULL;
 	void* libHandlerGPIO = NULL;
 	void *libHandlerPAC1932 = NULL;
 	void *libHandlerPCA9532 = NULL;
+	void *libHandlerCAN = NULL;
 
 	switch(Library){
 
-	case HTS221:
+	case WSEN_TIDS:
 
-		// Load HTS221 library
-		libHandlerHTS221 = this->SearchLibrary("libHTS221.so.1", "/usr/lib/");
+		// Load WSEN-TIDS library
+		libHandlerWSEN_TIDS = this->SearchLibrary("libWSEN_TIDS.so.1", "/usr/lib/");
 
-		this->HTS221_Initialize		= (error_type ( *)(void)) dlsym(libHandlerHTS221, "HTS221_Initialize");
-		this->HTS221_getHumidity 	= (error_type ( *)(float *)) dlsym(libHandlerHTS221, "HTS221_getHumidity");
-		this->HTS221_getTemperature	= (error_type ( *)(float *)) dlsym(libHandlerHTS221, "HTS221_getTemperature");
+		this->WSEN_TIDS_Initialize		= (error_type ( *)(void)) dlsym(libHandlerWSEN_TIDS, "WSEN_TIDS_Initialize");
+		this->WSEN_TIDS_getTemperature	= (error_type ( *)(float *)) dlsym(libHandlerWSEN_TIDS, "WSEN_TIDS_getTemperature");
 		break;
 
 	case GPIO:
@@ -85,6 +94,19 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 
 		break;
 
+	case CAN:
+
+		// Load PCA9532 shared library
+		libHandlerCAN = this->SearchLibrary("libCAN.so.1", "/usr/lib/");
+
+		this->CAN_Initialize		= (error_type ( *)(struct can_message *)) dlsym(libHandlerCAN, "CAN_Initialize");
+		this->CAN_Configure			= (error_type ( *)(struct can_message *)) dlsym(libHandlerCAN, "CAN_Configure");
+		this->CAN_Send				= (error_type ( *)(struct can_message *)) dlsym(libHandlerCAN, "CAN_Send");
+		this->CAN_SendFile			= (error_type ( *)(struct can_message *, char *)) dlsym(libHandlerCAN, "CAN_SendFile");
+		this->CAN_Receive			= (error_type ( *)(struct can_message *)) dlsym(libHandlerCAN, "CAN_Receive");
+
+		break;
+
 	default:
 		break;
 
@@ -92,7 +114,9 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 
 	return codeError;
 }
-
+/**
+ * Busca la libreria compartida en el filesystem
+ */
 void* SharedLibraries::SearchLibrary(const char* name, const char* directory)
 {
 	void *libHandler = NULL;
@@ -105,7 +129,7 @@ void* SharedLibraries::SearchLibrary(const char* name, const char* directory)
 
 	if(libHandler == NULL) printf("[ERROR]\tLoading %s \n", route);
 
-	//else printf("[OK]\tLibrary %s loaded \n", name);
+	else printf("[OK]\tLibrary %s loaded \n", name);
 
 	return libHandler;
 }

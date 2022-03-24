@@ -22,14 +22,6 @@
 #include "../../app_includes/app_errors.h"
 
 /*
- * Sensor states
- */
-#define		SENSOR_IDDLE		0
-#define		SENSOR_READY		1
-#define		SENSOR_WARNING		2
-#define		SENSOR_ERROR		3
-
-/*
  * LED colors
  */
 #define BLUE		0
@@ -47,8 +39,8 @@
  */
 #define	LED_TEMP		0
 #define	LED_PWR			1
-#define	LED_SIM			2
-#define	LED_METRICS		3
+#define	LED_ANDROID		2
+#define	LED_SIM			3
 
 
 class SharedLibraries {
@@ -60,9 +52,8 @@ public:
 
 	error_type LoadLibrary(uint32_t);
 
-	error_type (*HTS221_Initialize)(void);
-	error_type (*HTS221_getHumidity)(float *);
-	error_type (*HTS221_getTemperature)(float *);
+	error_type (*WSEN_TIDS_Initialize)(void);
+	error_type (*WSEN_TIDS_getTemperature)(float *);
 
 	error_type (*configGPIO)(uint8_t, char*);
 	error_type (*freeGPIO)(uint8_t);
@@ -76,6 +67,11 @@ public:
 	error_type (*setLED_Value)(uint8_t, uint8_t);
 	error_type (*PCA9532_Initialize)(void);
 
+	error_type (*CAN_Initialize)(struct can_message *);
+	error_type (*CAN_Configure)(struct can_message *);
+	error_type (*CAN_Send)(struct can_message *);
+	error_type (*CAN_SendFile)(struct can_message *, char *);
+	error_type (*CAN_Receive)(struct can_message *);
 };
 
 #endif /* SHAREDLIBRARIES_H_ */

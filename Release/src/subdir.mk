@@ -4,7 +4,8 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/Hardware.cpp \
+../src/AndroidControl.cpp \
+../src/CanControl.cpp \
 ../src/PowerControl.cpp \
 ../src/SharedLibraries.cpp \
 ../src/StartDaemon.cpp \
@@ -12,7 +13,8 @@ CPP_SRCS += \
 ../src/main.cpp 
 
 OBJS += \
-./src/Hardware.o \
+./src/AndroidControl.o \
+./src/CanControl.o \
 ./src/PowerControl.o \
 ./src/SharedLibraries.o \
 ./src/StartDaemon.o \
@@ -20,7 +22,8 @@ OBJS += \
 ./src/main.o 
 
 CPP_DEPS += \
-./src/Hardware.d \
+./src/AndroidControl.d \
+./src/CanControl.d \
 ./src/PowerControl.d \
 ./src/SharedLibraries.d \
 ./src/StartDaemon.d \
