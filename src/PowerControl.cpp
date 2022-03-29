@@ -10,7 +10,7 @@
 extern uint32_t PowerThread_isActive;
 extern uint32_t PowerState;
 
-extern std::mutex log_mutex;
+//extern std::mutex //log_mutex;
 /*
 
 USB, BATERY, PERIPHERALS, SOM
@@ -113,30 +113,30 @@ void PowerControl::PowerStateMachine()
 
 			case POWER_IDDLE:
 
-				log_mutex.lock();
+				//log_mutex.lock();
 				if(!this->LoadLibrary(PAC1932) && !this->LoadLibrary(PCA9532) && !
 						this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Value(LED_PWR, BLUE)){
 
 					PowerState = POWER_INITIALIZE;
 					std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 
 			case POWER_INITIALIZE:
 
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				if(!this->PAC1932_Initialize()){
 
 					PowerState = POWER_READY;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 
 			default:
 
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				if(!this->PAC1932_GetAllValues(&PowerData)){
 
@@ -209,7 +209,7 @@ void PowerControl::PowerStateMachine()
 			this->PowerChangeState(PowerState);
 			old_state = PowerState;
 		}
-		log_mutex.unlock();
+		//log_mutex.unlock();
 
 		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}

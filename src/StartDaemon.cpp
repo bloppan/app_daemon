@@ -25,6 +25,7 @@ extern uint32_t AndroidThread_isActive;
 
 extern float temperatura;
 
+extern uint8_t global_errors;
 /**
  * Constructor de la clase StartDaemon
  */
@@ -83,18 +84,14 @@ void StartDaemon::LaunchThreads()
 	std::thread TempThread(&TemperatureControl::TempStateMachine, *this);
 	std::thread PowerThread(&PowerControl::PowerStateMachine, *this);
 	std::thread AndroidThread(&AndroidControl::communication_state_machine, *this);
-	std::thread CanThread(&CanControl::CanStateMachine, *this);
+	//std::thread CanThread(&CanControl::CanStateMachine, *this);
 
-	// Finalizacion de los hilos
-	TempThread.join();
-	PowerThread.join();
-	AndroidThread.join();
-	CanThread.join();
+	while(1){
 
-	//std::thread DaemonThread(&StartDaemon::get_ThreadsState, *this);
-	//DaemonThread.join();
+		// DAEMON MAIN THREAD
 
-
+		sleep(1);
+	}
 }
 /**
  * Destructor de la clase StartDaemon

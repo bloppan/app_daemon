@@ -16,7 +16,7 @@ extern uint32_t CanState;
 #define CAN_LISTEN		3
 #define	CAN_ERROR		4
 
-extern std::mutex log_mutex;
+//extern std::mutex ////log_mutex;
 /*
  * Constructor de la clase CanControl
  */
@@ -42,26 +42,26 @@ void CanControl::CanStateMachine()
 		switch(CanState){
 
 			case CAN_IDDLE:
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nCAN THREAD:\t" << std::endl;
 				if(!this->LoadLibrary(CAN)){
 
 					CanState = CAN_INITIALIZE;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 			case CAN_INITIALIZE:
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nCAN THREAD:\t" << std::endl;
 				// Inicializa el bus CAN
 				if(!this->CAN_Initialize(&can_data)){
 
 					CanState = CAN_CONFIGURE;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 			case CAN_CONFIGURE:
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nCAN THREAD:\t" << std::endl;
 				// Configura el bus CAN
 				if(!this->CAN_Configure(&can_data)){
@@ -71,20 +71,20 @@ void CanControl::CanStateMachine()
 
 					CanState = CAN_INITIALIZE;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 			case CAN_LISTEN:
 				// Escucha mensajes del bus CAN
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nCAN THREAD:\t" << std::endl;
 				if(this->CAN_SendFile(&can_data, (char *)"/home/user1/can_message.txt")){ // Si se detecta algun error, se reinicia el bus
 
-					CanState = CAN_INITIALIZE;
+					CanState = CAN_CONFIGURE;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 			default:
-					CanState = CAN_INITIALIZE;
+					CanState = CAN_CONFIGURE;
 				break;
 		}
 		std::this_thread::sleep_for(std::chrono::seconds(3));

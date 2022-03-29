@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "StartDaemon.h"
+#include "AndroidControl.h"
 
 using namespace std;
 using namespace nlohmann;
@@ -28,6 +29,7 @@ std::mutex log_mutex;
 int main() {
 
 	StartDaemon daemon;
+	//std::thread AndroidThread;
 
 	TempState 		= 0;
 	PowerState 		= 0;
@@ -37,10 +39,15 @@ int main() {
 	TempThread_isActive		= 1;
 	PowerThread_isActive	= 1;
 	AndroidThread_isActive	= 1;
-	CanThread_isActive		= 1;
-
+	CanThread_isActive		= 0;
 
 	daemon.LaunchThreads();
+
+	printf("EEEEEEERRRRRROOOOOOOOOOOOOOOORRRRRRR \n");
+	while(1){
+
+
+	}
 
 	return 0;
 }

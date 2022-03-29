@@ -10,7 +10,7 @@
 extern uint32_t TempThread_isActive;
 extern uint32_t TempState;
 
-extern std::mutex log_mutex;
+//extern std::mutex ////log_mutex;
 
 //extern float temperatura;
 
@@ -111,18 +111,18 @@ void TemperatureControl::TempStateMachine()
 
 			case TEMP_IDDLE:
 
-				log_mutex.lock();
+				////log_mutex.lock();
 				if(!this->LoadLibrary(WSEN_TIDS) && !this->LoadLibrary(PCA9532) &&
 						!this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Value(LED_TEMP, BLUE)){
 
 					TempState = TEMP_INITIALIZE;
 				}
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				break;
 
 			case TEMP_INITIALIZE:
 
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nTEMPERATURE THREAD:\t" << std::endl;
 
 				//GPIOs de los ventiladores
@@ -136,13 +136,13 @@ void TemperatureControl::TempStateMachine()
 				this->WSEN_TIDS_Initialize();
 				this->PCA9532_Initialize();
 
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				TempState = TEMP_NORMAL;
 				break;
 
 			default:
 
-				log_mutex.lock();
+				//log_mutex.lock();
 				std::cout << "\n\nTEMPERATURE THREAD:\t" << std::endl;
 
 				// Lee el valor de temperatura del sensor
@@ -179,7 +179,9 @@ void TemperatureControl::TempStateMachine()
 			this->TempChangeState(TempState);
 			old_state = TempState;
 		}
-		log_mutex.unlock();
+		//log_mutex.unlock();
+
+
 		// El hilo se duerme durante 1 segundo
 		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}

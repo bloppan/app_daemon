@@ -12,7 +12,7 @@ using namespace std;
 
 extern uint32_t AndroidThread_isActive;
 
-extern std::mutex log_mutex;
+//extern std::mutex //log_mutex;
 /**
  * Constructor de la clase AndroidControl
  */
@@ -36,13 +36,12 @@ void AndroidControl::communication_state_machine(void)
 {
 	int sockfd = 0;
 	struct sockaddr_in servaddr;
-	uint8_t portasim_value = 0, portasim_old_value = 0;
 
 	char gpio_output[4] = "out";
+	char command[100];
+	uint8_t portasim_value = 0;
 
 	int communication_state = ADB_IDDLE;
-
-    char command[100];
 
 	while(AndroidThread_isActive){
 
@@ -54,7 +53,7 @@ void AndroidControl::communication_state_machine(void)
 
 			this->update_server_file();
 
-			log_mutex.lock();
+			//log_mutex.lock();
 
 			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 			if(!this->LoadLibrary(PCA9532) && !this->LoadLibrary(GPIO) &&
@@ -62,82 +61,77 @@ void AndroidControl::communication_state_machine(void)
 
 				this->configGPIO(EN_4V2, gpio_output);
 				this->configGPIO(EN_5V_USB_MOB, gpio_output);
-				this->configGPIO(0, (char *) "in");
+				this->configGPIO(PORTASIM_PRES, (char *) "in");
 
 				communication_state = ADB_POWER_UP;
 			}
-			log_mutex.unlock();
+			////log_mutex.unlock();
 			break;
 		case ADB_POWER_UP:
 
-			log_mutex.lock();
+			//log_mutex.lock();
 			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 			if(!this->setGPIO_Value(EN_5V_USB_MOB, 1) && !this->setGPIO_Value(EN_4V2, 1)){
 
 				communication_state = ADB_INITIALIZE;
 			}
-			log_mutex.unlock();
+			//log_mutex.unlock();
 			break;
 		case ADB_INITIALIZE:
 
-			log_mutex.lock();
+			//log_mutex.lock();
 			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-		    /* command contiene la string del comando a ejecutar (a character array) */
-		    bzero(command, sizeof(command));
-		    sprintf(command, "adb devices");
-		    // Ejecuta "adb devices"
-		    popen(command,"r");
-		    log_mutex.unlock();
+
+			system("adb shell touch /sdcard/metricsapp/supportSystemEnabled");
+
+			sleep(1);
+
+		    system("adb devices");
 
 		    sleep(3);
 
-		    log_mutex.lock();
-		    std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 		    bzero(command, sizeof(command));
 		    sprintf(command, "adb forward tcp:%d tcp:%d", PORT, PORT);
-		    // Ejecuta el comando
-		    popen(command,"r");
-		    log_mutex.unlock();
-
-		    sleep(1);
-
-		    log_mutex.lock();
+		    system(command);
 
 		    if(!this->create_socket(&sockfd)){
 
 		    	this->setLED_Value(LED_ANDROID, WHITE);
 				communication_state = ADB_CONNECTING;
 		    }
-		    log_mutex.unlock();
+		    //log_mutex.unlock();
 			break;
+
 		case ADB_CONNECTING:
-			log_mutex.lock();
+			//log_mutex.lock();
 
 
 			// Conexion al socket
 			if(this->connect_socket(&servaddr, &sockfd) == NO_ERROR){
 				this->setLED_Value(LED_ANDROID, GREEN);
 				communication_state = ADB_ESTABLISHED;
-				log_mutex.unlock();
+				//log_mutex.unlock();
 			}else {
+
+				this->setLED_Value(LED_ANDROID, WHITE);
 				communication_state = ADB_INITIALIZE;
-				log_mutex.unlock();
+				//log_mutex.unlock();
 				sleep(3);
 			}
 
 			break;
 		case ADB_ESTABLISHED:
-			log_mutex.lock();
+			//log_mutex.lock();
 			// Escucha el socket. Lo cierra en caso de perder la comunicacion
 			if(this->listen_socket(&sockfd) != NO_ERROR){
 
 				this->setLED_Value(LED_ANDROID, WHITE);
 				communication_state = ADB_CLOSE_SOCKET;
 			}
-			log_mutex.unlock();
+			//log_mutex.unlock();
 			break;
 		case ADB_CLOSE_SOCKET:
-			log_mutex.lock();
+			//log_mutex.lock();
 			// Cierra el socket
 
 			if(this->close_socket(&sockfd) == NO_ERROR){
@@ -146,31 +140,33 @@ void AndroidControl::communication_state_machine(void)
 				std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 				printf("[ANDROID]\t\tTrying reconnect to server...\n");
 			}
-			log_mutex.unlock();
+			//log_mutex.unlock();
 			break;
 		default:
 			break;
 		}
 
-		log_mutex.lock();
-		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
+		std::cout << "\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 		// Comprueba si el portaSIM esta conectado
-		this->getGPIO_Value(0, &portasim_value);
+		if(!this->getGPIO_Value(PORTASIM_PRES, &portasim_value)){
 
-		if(portasim_value){
-			// Si se lee un 1, el portaSIM esta conectado. Led verde.
-			this->setLED_Value(LED_SIM, GREEN);
+			if(portasim_value){
+				// Si se lee un 1, el portaSIM esta conectado. Led verde.
+				this->setLED_Value(LED_SIM, GREEN);
+			}else{
+				// Si se lee un 0, el portaSIM esta desconectado. Led blanco.
+				this->setLED_Value(LED_SIM, WHITE);
+			}
 		}else{
-			// Si se lee un 0, el portaSIM esta desconectado. Led blanco.
-			this->setLED_Value(LED_SIM, WHITE);
+
+			this->freeGPIO(PORTASIM_PRES);
+			this->configGPIO(PORTASIM_PRES, (char *) "in");
 		}
 
-		log_mutex.unlock();
-
-		usleep(200000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
-}
 
+}
 /**
  * Inicializacion de la estructura que contiene la informacion del movil Android
  */
