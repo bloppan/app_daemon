@@ -22,7 +22,7 @@ using namespace nlohmann;
 uint32_t TempThread_isActive, PowerThread_isActive, AndroidThread_isActive, CanThread_isActive;
 uint32_t TempState, PowerState, AndroidState, CanState;
 
-//float temperatura;
+float temperatura;
 
 std::mutex log_mutex;
 
