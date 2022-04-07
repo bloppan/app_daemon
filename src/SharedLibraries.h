@@ -64,7 +64,7 @@ public:
 	error_type (*PAC1932_Initialize)(void);
 	error_type (*PAC1932_GetAllValues)(PAC1932_struct*);
 
-	error_type (*setLED_Value)(uint8_t, uint8_t);
+	error_type (*setLED_Color_Blink)(uint8_t, uint8_t, uint8_t);
 	error_type (*PCA9532_Initialize)(void);
 
 	error_type (*CAN_Initialize)(struct can_message *);

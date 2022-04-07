@@ -43,7 +43,6 @@ int main() {
 
 	daemon.LaunchThreads();
 
-	printf("EEEEEEERRRRRROOOOOOOOOOOOOOOORRRRRRR \n");
 	while(1){
 
 

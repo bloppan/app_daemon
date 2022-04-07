@@ -54,11 +54,12 @@ void AndroidControl::communication_state_machine(void)
 			//log_mutex.lock();
 
 			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-			if(!this->LoadLibrary(PCA9532) && !this->LoadLibrary(GPIO) &&
-					!this->PCA9532_Initialize() && !this->setLED_Value(LED_ANDROID, BLUE)){
 
-				this->configGPIO(EN_4V2, gpio_output);
-				this->configGPIO(EN_5V_USB_MOB, gpio_output);
+			if(!this->LoadLibrary(PCA9532) && !this->LoadLibrary(GPIO) &&
+					!this->PCA9532_Initialize() && !this->setLED_Color_Blink(LED_ANDROID, BLUE, NO_BLINK)){
+
+				this->configGPIO(EN_4V2, (char *) "out");
+				this->configGPIO(EN_5V_USB_MOB, (char *) "out");
 				this->configGPIO(PORTASIM_PRES, (char *) "in");
 
 				communication_state = ADB_POWER_UP;
@@ -94,7 +95,7 @@ void AndroidControl::communication_state_machine(void)
 
 		    if(!this->create_socket(&sockfd)){
 
-		    	this->setLED_Value(LED_ANDROID, WHITE);
+		    	this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
 				communication_state = ADB_CONNECTING;
 		    }
 		    //log_mutex.unlock();
@@ -106,12 +107,12 @@ void AndroidControl::communication_state_machine(void)
 
 			// Conexion al socket
 			if(this->connect_socket(&servaddr, &sockfd) == NO_ERROR){
-				this->setLED_Value(LED_ANDROID, GREEN);
+				this->setLED_Color_Blink(LED_ANDROID, GREEN, NO_BLINK);
 				communication_state = ADB_ESTABLISHED;
 				//log_mutex.unlock();
 			}else {
 
-				this->setLED_Value(LED_ANDROID, WHITE);
+				this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
 				communication_state = ADB_INITIALIZE;
 				//log_mutex.unlock();
 				sleep(3);
@@ -123,7 +124,7 @@ void AndroidControl::communication_state_machine(void)
 			// Escucha el socket. Lo cierra en caso de perder la comunicacion
 			if(this->listen_socket(&sockfd) != NO_ERROR){
 
-				this->setLED_Value(LED_ANDROID, WHITE);
+				this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
 				communication_state = ADB_CLOSE_SOCKET;
 			}
 			//log_mutex.unlock();
@@ -150,10 +151,10 @@ void AndroidControl::communication_state_machine(void)
 
 			if(portasim_value){
 				// Si se lee un 1, el portaSIM esta conectado. Led verde.
-				this->setLED_Value(LED_SIM, GREEN);
+				this->setLED_Color_Blink(LED_SIM, GREEN, NO_BLINK);
 			}else{
 				// Si se lee un 0, el portaSIM esta desconectado. Led blanco.
-				this->setLED_Value(LED_SIM, WHITE);
+				this->setLED_Color_Blink(LED_SIM, WHITE, NO_BLINK);
 			}
 		}else{
 

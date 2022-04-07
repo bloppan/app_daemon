@@ -107,8 +107,6 @@ public:
 	int 	close_socket(int *);
 
 	int 	save_message_info();
-
-	void 	update_server_file();
 };
 
 

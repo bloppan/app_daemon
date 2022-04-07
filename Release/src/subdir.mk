@@ -10,7 +10,7 @@ CPP_SRCS += \
 ../src/SharedLibraries.cpp \
 ../src/StartDaemon.cpp \
 ../src/TemperatureControl.cpp \
-../src/app_daemon.cpp 
+../src/main.cpp 
 
 OBJS += \
 ./src/AndroidControl.o \
@@ -19,7 +19,7 @@ OBJS += \
 ./src/SharedLibraries.o \
 ./src/StartDaemon.o \
 ./src/TemperatureControl.o \
-./src/app_daemon.o 
+./src/main.o 
 
 CPP_DEPS += \
 ./src/AndroidControl.d \
@@ -28,7 +28,7 @@ CPP_DEPS += \
 ./src/SharedLibraries.d \
 ./src/StartDaemon.d \
 ./src/TemperatureControl.d \
-./src/app_daemon.d 
+./src/main.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

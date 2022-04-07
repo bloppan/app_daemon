@@ -40,12 +40,12 @@ void TemperatureControl::TempChangeState(uint32_t State)
 
 		case TEMP_IDDLE:
 			// Temperatura normal, LED azul
-			this->setLED_Value(LED_TEMP, BLUE);
+			this->setLED_Color_Blink(LED_TEMP, BLUE, NO_BLINK);
 			break;
 
 		case TEMP_NORMAL:
 			// Temperatura normal, LED verde
-			this->setLED_Value(LED_TEMP, GREEN);
+			this->setLED_Color_Blink(LED_TEMP, GREEN, NO_BLINK);
 
 			// Apagar ventiladores
 			this->setGPIO_Value(FANOUT_1, 0);
@@ -57,7 +57,7 @@ void TemperatureControl::TempChangeState(uint32_t State)
 			break;
 		case TEMP_ALARM_1:
 			// Encender LED amarillo
-			this->setLED_Value(LED_TEMP, YELLOW);
+			this->setLED_Color_Blink(LED_TEMP, YELLOW, NO_BLINK);
 
 			// Encender ventiladores
 			this->setGPIO_Value(FANOUT_1, 1);
@@ -69,7 +69,7 @@ void TemperatureControl::TempChangeState(uint32_t State)
 			break;
 		case TEMP_ALARM_2:
 			// Encender LED rojo
-			this->setLED_Value(LED_TEMP, RED);
+			this->setLED_Color_Blink(LED_TEMP, RED, NO_BLINK);
 
 			// Encender ventiladores
 			this->setGPIO_Value(FANOUT_1, 1);
@@ -83,7 +83,7 @@ void TemperatureControl::TempChangeState(uint32_t State)
 
 		case TEMP_ERROR:
 			// Encender LED blanco
-			this->setLED_Value(LED_TEMP, WHITE);
+			this->setLED_Color_Blink(LED_TEMP, WHITE, NO_BLINK);
 
 			break;
 
@@ -113,7 +113,7 @@ void TemperatureControl::TempStateMachine()
 
 				////log_mutex.lock();
 				if(!this->LoadLibrary(WSEN_TIDS) && !this->LoadLibrary(PCA9532) &&
-						!this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Value(LED_TEMP, BLUE)){
+						!this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Color_Blink(LED_TEMP, BLUE, NO_BLINK)){
 
 					TempState = TEMP_INITIALIZE;
 				}

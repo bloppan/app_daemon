@@ -73,22 +73,22 @@ void PowerControl::PowerChangeState(uint32_t State)
 	switch(State){
 
 		case POWER_READY:	// Lectura correcta de todos los voltajes (0x0000)
-			this->setLED_Value(LED_PWR, GREEN);
+			this->setLED_Color_Blink(LED_PWR, GREEN, NO_BLINK);
 		break;
 		case POWER_FAULT_ALL_SOURCES:	// 0x1111
-			this->setLED_Value(LED_PWR, RED);
+			this->setLED_Color_Blink(LED_PWR, RED, NO_BLINK);
 		break;
 		case POWER_FAULT_PERIPHERALS: // 0x01
-			this->setLED_Value(LED_PWR, PURPLE);
+			this->setLED_Color_Blink(LED_PWR, PURPLE, NO_BLINK);
 			break;
 		case POWER_FAULT_TERMINAL:	  // 0x10
-			this->setLED_Value(LED_PWR, YELLOW);
+			this->setLED_Color_Blink(LED_PWR, YELLOW, NO_BLINK);
 			break;
 		case POWER_FAULT_TERMINAL_AND_PERIPHERALS:	// 0x11
-			this->setLED_Value(LED_PWR, CYAN);
+			this->setLED_Color_Blink(LED_PWR, CYAN, NO_BLINK);
 			break;
 		case POWER_ERROR_READ:
-			this->setLED_Value(LED_PWR, WHITE);
+			this->setLED_Color_Blink(LED_PWR, WHITE, NO_BLINK);
 			break;
 		default:
 			break;
@@ -115,7 +115,7 @@ void PowerControl::PowerStateMachine()
 
 				//log_mutex.lock();
 				if(!this->LoadLibrary(PAC1932) && !this->LoadLibrary(PCA9532) && !
-						this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Value(LED_PWR, BLUE)){
+						this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Color_Blink(LED_PWR, BLUE, NO_BLINK)){
 
 					PowerState = POWER_INITIALIZE;
 					std::cout << "\n\nPOWER THREAD:\t" << std::endl;
@@ -197,7 +197,7 @@ void PowerControl::PowerStateMachine()
 				}else{
 					std::cout << "\nERROR reading Power sensor \n" << std::endl;
 					// Encender LED blanco
-					this->setLED_Value(LED_PWR, WHITE);
+					this->setLED_Color_Blink(LED_PWR, WHITE, NO_BLINK);
 				}
 
 				break;

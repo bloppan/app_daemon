@@ -27,7 +27,7 @@ SharedLibraries::SharedLibraries() {
 	this->PAC1932_Initialize	= NULL;
 	this->PAC1932_GetAllValues	= NULL;
 
-	this->setLED_Value			= NULL;
+	this->setLED_Color_Blink	= NULL;
 	this->PCA9532_Initialize 	= NULL;
 
 	this->CAN_Initialize		= NULL;
@@ -89,7 +89,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 		// Load PCA9532 shared library
 		libHandlerPCA9532 = this->SearchLibrary("libPCA9532.so.1", "/usr/lib/");
 
-		this->setLED_Value			= (error_type ( *)(uint8_t, uint8_t)) dlsym(libHandlerPCA9532, "setLED_Value");
+		this->setLED_Color_Blink	= (error_type ( *)(uint8_t, uint8_t, uint8_t)) dlsym(libHandlerPCA9532, "setLED_Color_Blink");
 		this->PCA9532_Initialize 	= (error_type ( *)(void)) dlsym(libHandlerPCA9532, "PCA9532_Initialize");
 
 		break;
