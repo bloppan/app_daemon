@@ -51,8 +51,6 @@ void AndroidControl::communication_state_machine(void)
 
 			this->android_data_initialize();
 
-			this->update_server_file();
-
 			//log_mutex.lock();
 
 			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
@@ -353,8 +351,6 @@ int AndroidControl::save_message_info()
 									"\t\tInstrumentation version: " << this->android_data.metrics_app.instrumentation_version << endl <<
 									"\t\tMetrics version: " << this->android_data.metrics_app.metrics_version << endl <<
 									"\t\tScript version: " << this->android_data.metrics_app.script_version << endl << endl;
-
-			this->update_server_file();
 			break;
 
 		case 2:
@@ -398,50 +394,4 @@ int AndroidControl::save_message_info()
 	}
 
 	return 0;
-}
-
-void AndroidControl::update_server_file(void)
-{
-	//Declaramos variables
-	int fd;
-	char web_content[2000];
-	char content_aux[2000];
-
-	bzero(web_content, 2000);
-	bzero(content_aux, 2000);
-
-	fd = open("/usr/share/apache2/default-site/htdocs/index.html",O_WRONLY|O_CREAT);
-
-	sprintf(web_content, "ID Sonda: %s <br>", this->android_data.android_dev.id_sonda.c_str());
-
-	sprintf(content_aux, "Serial Number: %s <br>", this->android_data.android_dev.serial_no.c_str());
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	sprintf(content_aux, "Model: %s <br><br>", this->android_data.android_dev.model.c_str());
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	sprintf(content_aux, "Interfaces: %d <br>", this->android_data.metrics_app.interfaces);
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	sprintf(content_aux, "Instrumentation Version: %s <br>", this->android_data.metrics_app.instrumentation_version.c_str());
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	sprintf(content_aux, "Metrics Version: %s <br>", this->android_data.metrics_app.metrics_version.c_str());
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	sprintf(content_aux, "Script Version: %s <br>", this->android_data.metrics_app.script_version.c_str());
-	strcat(web_content, content_aux);
-	bzero(content_aux, 2000);
-
-	//Guardamos en el archivo lo que ingresamos por teclado
-	write(fd, web_content, sizeof(web_content));
-
-	//CERRAR ARCHIVO
-	close(fd);
-
 }
