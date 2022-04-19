@@ -10,7 +10,6 @@
 extern uint32_t PowerThread_isActive;
 extern uint32_t PowerState;
 
-//extern std::mutex //log_mutex;
 /*
 
 USB, BATERY, PERIPHERALS, SOM
@@ -62,7 +61,6 @@ PowerControl::PowerControl() {
 	// TODO Auto-generated constructor stub
 
 	std::cout << "PowerControl Constructor" << std::endl;
-
 }
 /**
  * Cambio de estado en la alimentacion del sistema de soporte
@@ -74,10 +72,10 @@ void PowerControl::PowerChangeState(uint32_t State)
 
 		case POWER_READY:	// Lectura correcta de todos los voltajes (0x0000)
 			this->setLED_Color_Blink(LED_PWR, GREEN, NO_BLINK);
-		break;
+			break;
 		case POWER_FAULT_ALL_SOURCES:	// 0x1111
 			this->setLED_Color_Blink(LED_PWR, RED, NO_BLINK);
-		break;
+			break;
 		case POWER_FAULT_PERIPHERALS: // 0x01
 			this->setLED_Color_Blink(LED_PWR, PURPLE, NO_BLINK);
 			break;
@@ -100,44 +98,37 @@ void PowerControl::PowerChangeState(uint32_t State)
 void PowerControl::PowerStateMachine()
 {
 
-	PAC1932_struct PowerData = {0};
-
-	uint32_t power_error_code = 0;
-	uint32_t old_state;
+	PAC1932_struct	PowerData = {0};
+	uint32_t		power_error_code = 0;
+	uint32_t 		old_state;
 
 	old_state = PowerState;
 
 	while(PowerThread_isActive){
 
+		std::cout << "\n\nPOWER THREAD:\t" << std::endl;
+
 		switch(PowerState){
 
 			case POWER_IDDLE:
 
-				//log_mutex.lock();
 				if(!this->LoadLibrary(PAC1932) && !this->LoadLibrary(PCA9532) && !
 						this->LoadLibrary(GPIO) && !this->PCA9532_Initialize() && !this->setLED_Color_Blink(LED_PWR, BLUE, NO_BLINK)){
 
 					PowerState = POWER_INITIALIZE;
-					std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				}
-				//log_mutex.unlock();
 				break;
 
 			case POWER_INITIALIZE:
 
-				//log_mutex.lock();
-				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				if(!this->PAC1932_Initialize()){
 
 					PowerState = POWER_READY;
 				}
-				//log_mutex.unlock();
 				break;
 
 			default:
 
-				//log_mutex.lock();
-				std::cout << "\n\nPOWER THREAD:\t" << std::endl;
 				if(!this->PAC1932_GetAllValues(&PowerData)){
 
 					power_error_code = 0x0000;
@@ -209,8 +200,8 @@ void PowerControl::PowerStateMachine()
 			this->PowerChangeState(PowerState);
 			old_state = PowerState;
 		}
-		//log_mutex.unlock();
 
+		// Se duerme el hilo durante 3 segundos
 		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}
 }

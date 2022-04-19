@@ -39,49 +39,44 @@ void CanControl::CanStateMachine()
 
 	while(CanThread_isActive){
 
+		std::cout << "\n\nCAN THREAD:\t" << std::endl;
+
 		switch(CanState){
 
 			case CAN_IDDLE:
-				//log_mutex.lock();
-				std::cout << "\n\nCAN THREAD:\t" << std::endl;
+
 				if(!this->LoadLibrary(CAN)){
 
 					CanState = CAN_INITIALIZE;
 				}
-				//log_mutex.unlock();
+
 				break;
 			case CAN_INITIALIZE:
-				//log_mutex.lock();
-				std::cout << "\n\nCAN THREAD:\t" << std::endl;
+
 				// Inicializa el bus CAN
 				if(!this->CAN_Initialize(&can_data)){
-
 					CanState = CAN_CONFIGURE;
 				}
-				//log_mutex.unlock();
+
 				break;
+
 			case CAN_CONFIGURE:
-				//log_mutex.lock();
-				std::cout << "\n\nCAN THREAD:\t" << std::endl;
+
 				// Configura el bus CAN
-				if(!this->CAN_Configure(&can_data)){
-
+				if(!this->CAN_Configure(&can_data))
 					CanState = CAN_LISTEN;
-				}else{
-
+				else
 					CanState = CAN_INITIALIZE;
-				}
-				//log_mutex.unlock();
+
 				break;
 			case CAN_LISTEN:
-				// Escucha mensajes del bus CAN
-				//log_mutex.lock();
-				std::cout << "\n\nCAN THREAD:\t" << std::endl;
-				if(this->CAN_SendFile(&can_data, (char *)"/home/user1/can_message.txt")){ // Si se detecta algun error, se reinicia el bus
 
+				// Escucha mensajes del bus CAN
+				if(this->CAN_SendFile(&can_data, (char *)"/home/user1/can_message.txt")){
+					// Si se detecta algun error, se reinicia el bus
 					CanState = CAN_CONFIGURE;
 				}
-				//log_mutex.unlock();
+
 				break;
 			default:
 					CanState = CAN_CONFIGURE;

@@ -31,6 +31,7 @@ SharedLibraries::SharedLibraries() {
 	this->PCA9532_Initialize 	= NULL;
 
 	this->CAN_Initialize		= NULL;
+	this->CAN_Configure			= NULL;
 	this->CAN_Send				= NULL;
 	this->CAN_SendFile			= NULL;
 	this->CAN_Receive			= NULL;
@@ -117,7 +118,7 @@ error_type SharedLibraries::LoadLibrary(uint32_t Library)
 /**
  * Busca la libreria compartida en el filesystem
  */
-void* SharedLibraries::SearchLibrary(const char* name, const char* directory)
+void* SharedLibraries::SearchLibrary(const char * name, const char * directory)
 {
 	void *libHandler = NULL;
 	char route[256] = {0};

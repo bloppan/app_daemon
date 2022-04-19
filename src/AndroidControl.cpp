@@ -8,11 +8,8 @@
 
 #include "AndroidControl.h"
 
-using namespace std;
-
 extern uint32_t AndroidThread_isActive;
 
-//extern std::mutex //log_mutex;
 /**
  * Constructor de la clase AndroidControl
  */
@@ -34,118 +31,110 @@ AndroidControl::~AndroidControl() {
  */
 void AndroidControl::communication_state_machine(void)
 {
-	int sockfd = 0;
-	struct sockaddr_in servaddr;
+	int 	sockfd = 0;					// File descriptor del socket
+	struct 	sockaddr_in servaddr;		// Estructura de datos del servidor
+	char 	command[100];				// Array que almacena la cadena de caracteres del comando a ejecutar
+	uint8_t portasim_value = 0;			// Estado del portaSIM (0 -> desconectado ; 1 -> conectado)
+	int 	communication_state = ADB_IDDLE;	// Estado actual de la comunicacion
 
-	char gpio_output[4] = "out";
-	char command[100];
-	uint8_t portasim_value = 0;
-
-	int communication_state = ADB_IDDLE;
 
 	while(AndroidThread_isActive){
+
+		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 
 		switch(communication_state){
 
 		case ADB_IDDLE:
 
+			// Inicializacion de la estructura de datos del terminal Android
 			this->android_data_initialize();
 
-			//log_mutex.lock();
-
-			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-
+			// Carga las librerias, inicializa el controlador de LEDs y lo enciende de color Azul
 			if(!this->LoadLibrary(PCA9532) && !this->LoadLibrary(GPIO) &&
 					!this->PCA9532_Initialize() && !this->setLED_Color_Blink(LED_ANDROID, BLUE, NO_BLINK)){
 
+				// Configuracion de GPIOs
 				this->configGPIO(EN_4V2, (char *) "out");
 				this->configGPIO(EN_5V_USB_MOB, (char *) "out");
 				this->configGPIO(PORTASIM_PRES, (char *) "in");
 
 				communication_state = ADB_POWER_UP;
 			}
-			////log_mutex.unlock();
+
 			break;
 		case ADB_POWER_UP:
 
-			//log_mutex.lock();
-			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
+			// Habilita la alimentacion del USB (5V) y de la bateria del terminal (4V2)
 			if(!this->setGPIO_Value(EN_5V_USB_MOB, 1) && !this->setGPIO_Value(EN_4V2, 1)){
 
 				communication_state = ADB_INITIALIZE;
 			}
-			//log_mutex.unlock();
 			break;
+
 		case ADB_INITIALIZE:
 
-			//log_mutex.lock();
-			std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-
+			/*
+			 * Para inicializar la comunicacion, hay que crear el fichero /sdcard/metricsapp/supportSystemEnabled en el terminal Android,
+			 * despues ejecutar "adb devices" y por ultimo ejecutar "adb forward tcp:14000 tcp:14000"
+			 */
 			system("adb shell touch /sdcard/metricsapp/supportSystemEnabled");
-
-			sleep(1);
+			usleep(500000);
 
 		    system("adb devices");
-
-		    sleep(3);
+		    sleep(1);
 
 		    bzero(command, sizeof(command));
 		    sprintf(command, "adb forward tcp:%d tcp:%d", PORT, PORT);
 		    system(command);
+		    usleep(500000);
 
+		    // Crea el socket
 		    if(!this->create_socket(&sockfd)){
 
 		    	this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
 				communication_state = ADB_CONNECTING;
 		    }
-		    //log_mutex.unlock();
 			break;
 
 		case ADB_CONNECTING:
-			//log_mutex.lock();
-
 
 			// Conexion al socket
 			if(this->connect_socket(&servaddr, &sockfd) == NO_ERROR){
 				this->setLED_Color_Blink(LED_ANDROID, GREEN, NO_BLINK);
 				communication_state = ADB_ESTABLISHED;
-				//log_mutex.unlock();
 			}else {
-
+				// Si la conexion al socket falla, se procede a cerrarlo
 				this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
-				communication_state = ADB_INITIALIZE;
-				//log_mutex.unlock();
+				communication_state = ADB_CLOSE_SOCKET;
 				sleep(3);
 			}
-
 			break;
+
 		case ADB_ESTABLISHED:
-			//log_mutex.lock();
-			// Escucha el socket. Lo cierra en caso de perder la comunicacion
+			// Escucha la comunicacion del socket. Lo cierra en caso de perder la comunicacion
 			if(this->listen_socket(&sockfd) != NO_ERROR){
 
 				this->setLED_Color_Blink(LED_ANDROID, WHITE, NO_BLINK);
 				communication_state = ADB_CLOSE_SOCKET;
 			}
-			//log_mutex.unlock();
+
 			break;
 		case ADB_CLOSE_SOCKET:
-			//log_mutex.lock();
-			// Cierra el socket
 
+			// Cierra el socket
 			if(this->close_socket(&sockfd) == NO_ERROR){
 
+				// Inicializa de nuevo la comunicacion
 				communication_state = ADB_INITIALIZE;
-				std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-				printf("[ANDROID]\t\tTrying reconnect to server...\n");
+				std::cout << "[ANDROID]\t\tTrying reconnect to server..." << endl;
 			}
-			//log_mutex.unlock();
 			break;
 		default:
 			break;
 		}
 
 		std::cout << "\nANDROID COMMUNICATION THREAD:\t" << std::endl;
+
 		// Comprueba si el portaSIM esta conectado
 		if(!this->getGPIO_Value(PORTASIM_PRES, &portasim_value)){
 
@@ -157,14 +146,12 @@ void AndroidControl::communication_state_machine(void)
 				this->setLED_Color_Blink(LED_SIM, WHITE, NO_BLINK);
 			}
 		}else{
-
+			// Si no se puede obtener el valor del GPIO, se libera y se vuelve a configurar
 			this->freeGPIO(PORTASIM_PRES);
 			this->configGPIO(PORTASIM_PRES, (char *) "in");
 		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
-
 }
 /**
  * Inicializacion de la estructura que contiene la informacion del movil Android
@@ -193,29 +180,24 @@ void AndroidControl::android_data_initialize()
  */
 int AndroidControl::close_socket(int * sockfd){
 
-	if(close(*sockfd)){
-
+	if(close(*sockfd))
 		return APP_REPORT(APP_DAEMON, CLOSING_SOCKET);
-	}else {
-
+	else
 		return NO_ERROR;
-	}
 }
 /**
  * Creacion del socket
  */
 int AndroidControl::create_socket(int * sockfd){
 
-	// socket create and verification
 	*sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
 	if (*sockfd == -1) {
-		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-		printf("[ANDROID]\t\tSocket creation failed...\n");
+		std::cout << "[ANDROID]\t\tSocket creation failed..." << endl;
 		return APP_REPORT(APP_DAEMON, OPENING_SOCKET);
 	}
 	else{
-		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-		printf("[ANDROID]\t\tSocket successfully created...\n");
+		std::cout << "[ANDROID]\t\tSocket successfully created" << endl;
 		return NO_ERROR;
 	}
 }
@@ -230,14 +212,12 @@ int AndroidControl::connect_socket(struct sockaddr_in * servaddr, int * sockfd){
 	servaddr->sin_addr.s_addr = inet_addr("127.0.0.1");
 	servaddr->sin_port = htons(PORT);
 
-	// connect the client socket to server socket
+	// Conexion del cliente (nosotros) con el servidor (terminal Android)
 	if (connect(*sockfd, (SA*)servaddr, sizeof(*servaddr)) != 0) {
-		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-		printf("[ANDROID]\t\tConnection with server failed...\n");
+		std::cout << "[ANDROID]\t\tConnection with server failed..." << endl;
 		return APP_REPORT(APP_DAEMON, CONNECTING_SOCKET);
 	}else{
-		std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
-		printf("[ANDROID]\t\tConnected to server... Waiting response...\n");
+		std::cout << "[ANDROID]\t\tConnected to server... Waiting response..." << endl;
 		return NO_ERROR;
 	}
 }
@@ -248,10 +228,10 @@ int AndroidControl::send_socket(int * sockfd, const void * data , int lenght)
 {
 	// Escribe datos a traves del socket
 	if (write(*sockfd, data, lenght) == lenght){
-		printf("[ANDROID]\t\tWrite socket = %s \n", (char *) data);
+		std::cout << "[ANDROID]\t\tWrite socket = " << (char *) data << endl;
 		return NO_ERROR;
 	} else {
-		perror("[ANDROID]\t\tWrite error: ");
+		std::cout << "[ANDROID]\t\tWrite socket failed..." << endl;
 		return APP_REPORT(APP_DAEMON, WRITING_SOCKET);
 	}
 }
@@ -278,29 +258,21 @@ int AndroidControl::listen_socket(int * sockfd)
 	int retval = select(*sockfd + 1, &rfds, NULL, NULL, &tv);
 
 	if(retval > 0){
-
+		// Wait 100ms
 		usleep(100000);
 		nbytes = read(*sockfd, buff, sizeof(buff));
 
 		if(nbytes == 0){
-
 			if(reintentos++ > 3){
-
 				return CONNECTION_LOST;
 			}
 			sleep(1);
-
 		}else{
-
 			reintentos = 0;
-
 			try{
-
 				this->android_data.json_message = nlohmann::json::parse(buff);
 				this->save_message_info();
-
 			}catch(const std::exception& e){
-				std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 				printf("[ANDROID]\t\tJSON Parse error, received from server : %s", buff);
 			}
 		}
@@ -311,7 +283,6 @@ int AndroidControl::listen_socket(int * sockfd)
 		perror("[ANDROID]\t\tError select:  \n");
 		return APP_REPORT(APP_DAEMON, SELECT_SOCKET);
 	}
-
     return NO_ERROR;
 }
 /**
@@ -319,7 +290,6 @@ int AndroidControl::listen_socket(int * sockfd)
  */
 int AndroidControl::save_message_info()
 {
-
 	char command[100];
 	std::cout << "\n\nANDROID COMMUNICATION THREAD:\t" << std::endl;
 	printf("[ANDROID]\t\tJSON Message received from server \n");

@@ -7,29 +7,20 @@
 //============================================================================
 
 #include <iostream>
-#include <mutex>
-#include <thread>
-
 #include <stdio.h>
 #include <unistd.h>
+
 #include "StartDaemon.h"
-#include "AndroidControl.h"
 
-using namespace std;
-using namespace nlohmann;
-
-
+// Variables de activacion / desactivacion de los hilos
 uint32_t TempThread_isActive, PowerThread_isActive, AndroidThread_isActive, CanThread_isActive;
+
+// Variables de estado de las maquinas de estado de los hilos
 uint32_t TempState, PowerState, AndroidState, CanState;
-
-float temperatura;
-
-std::mutex log_mutex;
 
 int main() {
 
 	StartDaemon daemon;
-	//std::thread AndroidThread;
 
 	TempState 		= 0;
 	PowerState 		= 0;
@@ -43,10 +34,6 @@ int main() {
 
 	daemon.LaunchThreads();
 
-	while(1){
-
-
-	}
-
 	return 0;
 }
+
